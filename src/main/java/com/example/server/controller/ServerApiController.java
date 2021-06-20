@@ -4,7 +4,16 @@ import com.example.server.dto.Req;
 import com.example.server.dto.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/api/server")
@@ -18,6 +27,49 @@ public class ServerApiController {
 //        user.setAge(15);
 //        return user;
 //    }
+
+    /*
+     https://openapi.naver.com/v1/search/local.json
+     ?query=%EC%A3%BC%EC%8B%9D
+     &display=10
+     &start=1
+     &sort=random
+     */
+    @GetMapping("/naver")
+    public String naver(@RequestParam String keyword) {
+        //http://localhost:9090/api/server/naver?keyword=방배준오헤
+        //http://localhost:9090/api/server/naver?keyword=%EB%B0%A9%EB%B0%B0%EC%A4%80%EC%98%A4%ED%97%A4%EC%96%B4
+//        String query = "산본롯데피트인";
+//        String encode = Base64.getEncoder().encodeToString(query.getBytes(StandardCharsets.UTF_8));
+
+        URI uri = UriComponentsBuilder
+                .fromUriString("https://openapi.naver.com")
+                .path("/v1/search/local.json")
+                .queryParam("query", keyword)
+                .queryParam("display", 10)
+                .queryParam("start", 1)
+                .queryParam("sort", "random")
+                .encode(StandardCharsets.UTF_8)
+                .encode()
+                .build()
+                .toUri();
+
+        log.info("naver search uri: {}", uri);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        RequestEntity<Void> req = RequestEntity
+                .get(uri)
+                .header("X-Naver-Client-Id", "Cc2S153b3YTw22dnxJru")
+                .header("X-Naver-Client-Secret", "o1Xx7Fn_nz")
+                .build();
+        log.info("naver search RequestEntity: {}",  req);
+
+        ResponseEntity<String> result = restTemplate.exchange(req, String.class);
+
+        return result.getBody();
+
+    }
 
     @GetMapping("/hello")
     public User hello(@RequestParam String name, @RequestParam int age){
